@@ -35,10 +35,73 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   var _ipAddress = '';
+  var _userProfilelist = '';
   var _ub = userBo;
   final _TextControlTitle = TextEditingController();
   final _TextControlName = TextEditingController();
   final _TextControlPwd = TextEditingController();
+
+  _getUserProfileList() async {
+    var url = 'http://jnss1980.asuscomm.com:5000/getUserProfileList';
+    String result;
+    userBo o;
+    final response = await http.get(url);
+    Utf8Decoder decode = new Utf8Decoder();
+
+    if (response.statusCode == 200) {
+      result = "";
+      //var z = jsonDecode(utf8.decode(response.bodyBytes));
+      final Map<String, dynamic> responseMap =
+          jsonDecode(utf8.decode(response.bodyBytes));
+
+      List<userBo> o = new List<userBo>();
+      for (dynamic z in responseMap["data"]) {
+        // o.add(new userBo(
+        //     user_ID: z[0].toString(),
+        //     user_title: z[1].toString(),
+        //     user_name: z[2].toString(),
+        //     user_pwd: z[3].toString(),
+        //     user_phone: z[4].toString(),
+        //     RecordTime: z[5].toString()));
+
+        result += "user_ID:" +
+            z[0].toString() +
+            ",user_title:" +
+            z[1].toString() +
+            ",user_name:" +
+            z[2].toString() +
+            ",user_pwd:" +
+            z[3].toString() ;
+      }
+
+      /*
+       command = "CREATE TABLE UserProfile(\
+            user_ID Text Not NULL,\
+            user_title Text NULL,\
+            user_name Text NULL,\
+            user_pwd Text NULL,\
+            user_phone TEXT NULL,\
+            RecordTime Text NOT Null,\
+            PRIMARY KEY (user_ID, RecordTime)
+       */
+
+      // result = "user_title:" +
+      //     o.user_title +
+      //     ",user_name:" +
+      //     o.user_name +
+      //     ",user_pwd:" +
+      //     o.user_pwd +
+      //     ",Server IP:" +
+      //     o.user_remote_addr;
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      _ipAddress = result;
+      //_ub = o as Type;
+    });
+  }
 
   _getIPAddress() async {
     var url = 'http://jnss1980.asuscomm.com:5000/';
@@ -80,7 +143,9 @@ class _MyHomePageState extends State<MyHomePage> {
     result = response.body;
 
     o = userBo.fromJson(jsonDecode(response.body));
-    result = "user_title:" +
+    result = "user_ID:" +
+        o.user_ID +
+        ",user_title:" +
         o.user_title +
         ",user_name:" +
         o.user_name +
@@ -92,7 +157,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
     setState(() {
       _ipAddress = result;
-     //_ub = o as Type;
+      //_ub = o as Type;
     });
   }
 
@@ -224,8 +289,7 @@ class _MyHomePageState extends State<MyHomePage> {
               margin: EdgeInsets.all(10.0),
               width: 300,
               height: 70,
-              child:
-              new Text(
+              child: new Text(
                 '$_ipAddress.',
                 textAlign: TextAlign.left,
               ),
@@ -235,6 +299,10 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: _getIPAddress,
               child: new Text('取得網路資訊 !!'),
             ),
+            new RaisedButton(
+              onPressed: _getUserProfileList,
+              child: new Text("取得使用者清單"),
+            )
           ],
         ),
       ),
@@ -242,21 +310,34 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
+
 class userBo {
+  final String user_ID;
   final String user_title;
   final String user_name;
   final String user_pwd;
+  final String user_phone;
   final String user_remote_addr;
+  final String RecordTime;
 
   userBo(
-      {this.user_title, this.user_name, this.user_pwd, this.user_remote_addr});
+      {this.user_ID,
+      this.user_title,
+      this.user_name,
+      this.user_pwd,
+      this.user_phone,
+      this.user_remote_addr,
+      this.RecordTime});
 
   factory userBo.fromJson(Map<String, dynamic> json) {
     return userBo(
+      user_ID: json['user_ID'] as String,
       user_title: json['user_title'] as String,
       user_name: json['user_name'] as String,
       user_pwd: json['user_pwd'] as String,
+      user_phone: json['user_phone'] as String,
       user_remote_addr: json['user_remote_addr'] as String,
+      RecordTime: json['RecordTime'] as String,
     );
   }
 }
